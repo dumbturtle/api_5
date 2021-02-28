@@ -19,21 +19,23 @@ def main():
         "period": 30,
     }
     programming_language_range = {
-        "JavaScript": "программист JavaScript",
-        "Java": "программист Java",
+        # "JavaScript": "программист JavaScript",
+        # "Java": "программист Java",
         "Python": "программист Python",
-        "Ruby": "программист Ruby",
-        "PHP": "программист PHP",
-        "C++": "программист C++",
-        "Swift": "программист Swift",
-        "C#": "программист C#",
-        "Scala": "программист Scala",
-        "Go": "программист Go",
+        # "Ruby": "программист Ruby",
+        # "PHP": "программист PHP",
+        # "C++": "программист C++",
+        # "Swift": "программист Swift",
+        # "C#": "программист C#",
+        # "Scala": "программист Scala",
+        # "Go": "программист Go",
     }
     for programming_language in programming_language_range:
         hh_params["text"] = programming_language_range.get(programming_language)
         hh_link_response = get_response_from_link(hh_api_link, hh_params)
         number_vacancies[programming_language] = hh_link_response.json().get("found")
+        for vacancie_item in hh_link_response.json().get("items"):
+            print(vacancie_item.get("salary"))
     print(number_vacancies)
 
 
