@@ -1,4 +1,5 @@
 import pprint
+from itertools import count
 from typing import Union
 
 import requests
@@ -27,18 +28,31 @@ def predict_rub_salary(vacancy: dict) -> Union[int, None]:
     return None
 
 
-def predict_average_salary(vacancies: list) -> dict:
+def predict_average_salary(api_link: str, request_params: dict) -> dict:
+    print(request_params.get("text"))
     average_salary = 0
+    vacancy_salary_average_sum = 0
     vacancies_processed = 0
-    for vacancy in vacancies:
-        salary_vacancy_average = predict_rub_salary(vacancy)
-        if salary_vacancy_average:
-            average_salary += salary_vacancy_average
-            vacancies_processed += 1
-    average_salary = average_salary / vacancies_processed
+    items_limit = 2000 - request_params.get("per_page", 0)
+    for page in count():
+        request_params["page"] = page
+        page_response = get_response_from_link(api_link, request_params)
+        page_response.raise_for_status()
+        page_content = page_response.json()
+        items = page * page_content.get("per_page")
+        if page >= page_content.get("pages") or items >= items_limit:
+            break
+        for vacancy in page_content.get("items"):
+            salary_vacancy_average = predict_rub_salary(vacancy)
+            if salary_vacancy_average:
+                vacancy_salary_average_sum += salary_vacancy_average
+                vacancies_processed += 1
+        print("page", page, end="\r")
+    average_salary = int(vacancy_salary_average_sum / vacancies_processed)
     return {
+        "vacancies_found": page_content.get("found"),
         "vacancies_processed": vacancies_processed,
-        "average_salary": int(average_salary),
+        "average_salary": average_salary,
     }
 
 
@@ -49,6 +63,7 @@ def main():
     hh_params = {
         "area": 1,
         "period": 30,
+        "per_page": 20,
     }
     programming_language_range = {
         "JavaScript": "программист JavaScript",
@@ -64,12 +79,9 @@ def main():
     }
     for programming_language in programming_language_range:
         hh_params["text"] = programming_language_range.get(programming_language)
-        hh_link_response = get_response_from_link(hh_api_link, hh_params)
-        vacancy_items = hh_link_response.json().get("items")
-        salary_languages[programming_language] = predict_average_salary(vacancy_items)
-        salary_languages[programming_language][
-            "vacancies_found"
-        ] = hh_link_response.json().get("found")
+        salary_languages[programming_language] = predict_average_salary(
+            hh_api_link, hh_params
+        )
     pprint.pprint(salary_languages)
 
 
