@@ -12,14 +12,29 @@ def get_response_from_link(link: str, params: dict) -> requests.models.Response:
 
 def main():
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+    number_vacancies = {}
     hh_api_link = "https://api.hh.ru/vacancies"
     hh_params = {
-        "text": "программист",
         "area": 1,
         "period": 30,
     }
-    hh_link_response = get_response_from_link(hh_api_link, hh_params)
-    print(hh_link_response.json().get("found"))
+    programming_language_range = {
+        "JavaScript": "программист JavaScript",
+        "Java": "программист Java",
+        "Python": "программист Python",
+        "Ruby": "программист Ruby",
+        "PHP": "программист PHP",
+        "C++": "программист C++",
+        "Swift": "программист Swift",
+        "C#": "программист C#",
+        "Scala": "программист Scala",
+        "Go": "программист Go",
+    }
+    for programming_language in programming_language_range:
+        hh_params["text"] = programming_language_range.get(programming_language)
+        hh_link_response = get_response_from_link(hh_api_link, hh_params)
+        number_vacancies[programming_language] = hh_link_response.json().get("found")
+    print(number_vacancies)
 
 
 if __name__ == "__main__":
