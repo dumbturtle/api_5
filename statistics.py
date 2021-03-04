@@ -67,14 +67,19 @@ def predict_average_salary_for_hh(api_link: str, request_params: Dict) -> Dict:
 def predict_average_salary_for_superjob(
     api_link: str, request_params: Dict, request_headers: Dict
 ) -> Dict:
-    page_response = get_response_from_link(
-        api_link, params=request_params, headers=request_headers
-    )
-    page_content = page_response.json()
-    range_average_salaries = [
-        predict_rub_salary_for_superjob(vacancy)
-        for vacancy in page_content.get("objects")
-    ]
+    range_average_salaries = []
+    for page in count():
+        request_params["page"] = page
+        page_response = get_response_from_link(
+            api_link, params=request_params, headers=request_headers
+        )
+        page_content = page_response.json()
+        range_vacancies = page_content.get("objects")
+        if not range_vacancies:
+            break
+        range_average_salaries += [
+            predict_rub_salary_for_superjob(vacancy) for vacancy in range_vacancies
+        ]
     average_salaries = calculate_average_salary_for_all_vacancies(
         range_average_salaries
     )
