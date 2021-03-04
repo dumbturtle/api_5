@@ -35,7 +35,7 @@ HH_API_LINK="https://api.hh.ru/vacancies"
 ```
 #SuperJob
 SUPERJOB_API_LINK="https://api.superjob.ru/2.0/vacancies/"
-SUPERJOB_API_KEY = "Your API KEY"
+SUPERJOB_API_KEY="Your API KEY"
 ```
 ### Цель проекта
 
