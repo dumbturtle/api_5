@@ -32,12 +32,12 @@ def predict_salary(
 
 def predict_rub_salary_for_hh(vacancy: Dict) -> Optional[float]:
     salary_description = vacancy.get("salary")
-    if salary_description:
-        salary_from = salary_description.get("from")
-        salary_to = salary_description.get("to")
-        return predict_salary(salary_from, salary_to)
-    return None
-
+    if not salary_description:
+        return None
+    salary_from = salary_description.get("from")
+    salary_to = salary_description.get("to")
+    return predict_salary(salary_from, salary_to)
+    
 
 def predict_rub_salary_for_superjob(vacancy: Dict) -> Optional[float]:
     salary_from = vacancy.get("payment_from")
