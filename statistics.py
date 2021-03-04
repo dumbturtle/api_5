@@ -46,7 +46,7 @@ def predict_rub_salary_for_superjob(vacancy: Dict) -> Optional[float]:
 
 
 def predict_average_salary_for_hh(api_link: str, request_params: Dict) -> Dict:
-    salary_vacancy_average = []
+    range_average_salaries = []
     items_limit = 2000 - request_params.get("per_page", 0)
     for page in count():
         request_params["page"] = page
@@ -55,14 +55,14 @@ def predict_average_salary_for_hh(api_link: str, request_params: Dict) -> Dict:
         items = page * page_content.get("per_page")
         if page >= page_content.get("pages") or items >= items_limit:
             break
-        salary_vacancy_average += [
+        range_average_salaries += [
             predict_rub_salary_for_hh(vacancy) for vacancy in page_content.get("items")
         ]
-    average_salary = calculation_average_salary_for_all_vacancies(
-        salary_vacancy_average
+    average_salaries = calculate_average_salary_for_all_vacancies(
+        range_average_salaries
     )
-    average_salary["vacancies_found"] = page_content.get("found")
-    return average_salary
+    average_salaries["vacancies_found"] = page_content.get("found")
+    return average_salaries
 
 
 def predict_average_salary_for_superjob(
@@ -72,24 +72,24 @@ def predict_average_salary_for_superjob(
         api_link, params=request_params, headers=request_headers
     )
     page_content = page_response.json()
-    salary_vacancy_average = [
+    range_average_salaries = [
         predict_rub_salary_for_superjob(vacancy)
         for vacancy in page_content.get("objects")
     ]
-    average_salary = calculation_average_salary_for_all_vacancies(
-        salary_vacancy_average
+    average_salaries = calculate_average_salary_for_all_vacancies(
+        range_average_salaries
     )
-    average_salary["vacancies_found"] = page_content.get("total")
-    return average_salary
+    average_salaries["vacancies_found"] = page_content.get("total")
+    return average_salaries
 
 
-def calculation_average_salary_for_all_vacancies(salary_range: List) -> Dict:
+def calculate_average_salary_for_all_vacancies(salary_range: List) -> Dict:
     average_salary = 0
-    salary_range_filtered: List[float] = list(filter(None, salary_range))
-    vacancy_salary_sum = sum(salary_range_filtered)
-    vacancies_processed = len(salary_range_filtered)
-    if not (vacancy_salary_sum or vacancies_processed) == 0:
-        average_salary = int(vacancy_salary_sum / vacancies_processed)
+    filtered_range_salaries: List[float] = list(filter(None, salary_range))
+    summation_result_salary = sum(filtered_range_salaries)
+    vacancies_processed = len(filtered_range_salaries)
+    if not (salary_sum or vacancies_processed) == 0:
+        average_salary = int(summation_result_salary / vacancies_processed)
     return {
         "vacancies_processed": vacancies_processed,
         "average_salary": average_salary,
@@ -101,8 +101,8 @@ def main():
     load_dotenv()
     hh_language_salary = {}
     superjob_language_salary = {}
-    table_content_hh = []
-    table_content_superjob = []
+    hh_table_content = []
+    superjob_table_content = []
     programming_language_range = {
         "JavaScript": "программист JavaScript",
         "Java": "программист Java",
@@ -128,16 +128,16 @@ def main():
     superjob_params = {
         "town": 4,
     }
-    title_hh = "HeadHunter Moscow"
-    title_superjob = "SuperJob Moscow"
+    hh_title = "HeadHunter Moscow"
+    superjob_title = "SuperJob Moscow"
     table_structure = [
         "Язык программирования",
         "Вакансий найдено",
         "Вакансий обработано",
         "Средняя зарплата",
     ]
-    table_content_hh.append(table_structure)
-    table_content_superjob.append(table_structure)
+    hh_table_content.append(table_structure)
+    superjob_table_content.append(table_structure)
     try:
         for programming_language in programming_language_range:
             hh_params["text"] = programming_language_range.get(programming_language)
@@ -148,7 +148,7 @@ def main():
             superjob_language_salary = predict_average_salary_for_superjob(
                 superjob_api_link, superjob_params, superjob_headers
             )
-            table_content_superjob.append(
+            superjob_table_content.append(
                 [
                     programming_language,
                     superjob_language_salary.get("vacancies_found"),
@@ -158,7 +158,7 @@ def main():
             )
 
             hh_language_salary = predict_average_salary_for_hh(hh_api_link, hh_params)
-            table_content_hh.append(
+            hh_table_content.append(
                 [
                     programming_language,
                     hh_language_salary.get("vacancies_found"),
@@ -166,8 +166,8 @@ def main():
                     hh_language_salary.get("average_salary"),
                 ]
             )
-        print(AsciiTable(table_content_hh, title_hh).table)
-        print(AsciiTable(table_content_superjob, title_superjob).table)
+        print(AsciiTable(hh_table_content, hh_title).table)
+        print(AsciiTable(superjob_table_content, superjob_title).table)
     except (requests.ConnectionError, requests.HTTPError):
         print("Что-то пошло не так. Проверьте соединение с интернетом.")
 
