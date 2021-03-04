@@ -1,6 +1,6 @@
 import os
 from itertools import count
-from typing import Optional, List, Dict
+from typing import Dict, List, Optional
 
 import requests
 from dotenv import load_dotenv
@@ -37,7 +37,7 @@ def predict_rub_salary_for_hh(vacancy: Dict) -> Optional[float]:
     salary_from = salary_description.get("from")
     salary_to = salary_description.get("to")
     return predict_salary(salary_from, salary_to)
-    
+
 
 def predict_rub_salary_for_superjob(vacancy: Dict) -> Optional[float]:
     salary_from = vacancy.get("payment_from")
@@ -47,17 +47,13 @@ def predict_rub_salary_for_superjob(vacancy: Dict) -> Optional[float]:
 
 def predict_average_salary_for_hh(api_link: str, request_params: Dict) -> Dict:
     range_average_salaries = []
-    page_content = {
-            "pages": 100
-        }
+    page_content = {"pages": 100}
     for page in count():
-        if page >= page_content.get("pages"):
+        if page >= page_content["pages"]:
             break
         request_params["page"] = page
         page_response = get_response_from_link(api_link, params=request_params)
         page_content = page_response.json()
-        items = page * page_content.get("per_page")
-
         range_average_salaries += [
             predict_rub_salary_for_hh(vacancy) for vacancy in page_content.get("items")
         ]
@@ -99,13 +95,73 @@ def calculate_average_salary_for_all_vacancies(salary_range: List) -> Dict:
     }
 
 
+def collect_hh_all_statistic(programming_language_range: Dict, api_link: str) -> List:
+    hh_statistic = []
+    hh_params = {
+        "area": 1,
+        "period": 30,
+        "per_page": 20,
+    }
+    for programming_language in programming_language_range:
+        hh_params["text"] = programming_language_range.get(programming_language)
+        hh_language_salary = predict_average_salary_for_hh(api_link, hh_params)
+        hh_statistic.append(
+            [
+                programming_language,
+                hh_language_salary.get("vacancies_found"),
+                hh_language_salary.get("vacancies_processed"),
+                hh_language_salary.get("average_salary"),
+            ]
+        )
+    return hh_statistic
+
+
+def collect_superjob_all_statistic(
+    programming_language_range: Dict, api_link: str
+) -> List:
+    superjob_statistic = []
+    superjob_headers = {
+        "X-Api-App-Id": os.environ["SUPERJOB_API_KEY"],
+    }
+    superjob_params = {
+        "town": 4,
+    }
+    for programming_language in programming_language_range:
+        superjob_params["keyword"] = programming_language_range.get(
+            programming_language
+        )
+        superjob_language_salary = predict_average_salary_for_superjob(
+            api_link, superjob_params, superjob_headers
+        )
+        superjob_statistic.append(
+            [
+                programming_language,
+                superjob_language_salary.get("vacancies_found"),
+                superjob_language_salary.get("vacancies_processed"),
+                superjob_language_salary.get("average_salary"),
+            ]
+        )
+    return superjob_statistic
+
+
+def create_table(content: List, title: str) -> AsciiTable.table:
+    table_structure = [
+        "Язык программирования",
+        "Вакансий найдено",
+        "Вакансий обработано",
+        "Средняя зарплата",
+    ]
+    table_content = [table_structure] + content
+    return AsciiTable(table_content, title).table
+
+
 def main():
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
     load_dotenv()
-    hh_language_salary = {}
-    superjob_language_salary = {}
-    hh_table_content = []
-    superjob_table_content = []
+    hh_api_link = os.environ["HH_API_LINK"]
+    superjob_api_link = os.environ["SUPERJOB_API_LINK"]
+    hh_title = "HeadHunter Moscow"
+    superjob_title = "SuperJob Moscow"
     programming_language_range = {
         "JavaScript": "программист JavaScript",
         "Java": "программист Java",
@@ -118,59 +174,18 @@ def main():
         "Scala": "программист Scala",
         "Go": "программист Go",
     }
-    hh_api_link = os.environ["HH_API_LINK"]
-    hh_params = {
-        "area": 1,
-        "period": 30,
-        "per_page": 20,
-    }
-    superjob_api_link = os.environ["SUPERJOB_API_LINK"]
-    superjob_headers = {
-        "X-Api-App-Id": os.environ["SUPERJOB_API_KEY"],
-    }
-    superjob_params = {
-        "town": 4,
-    }
-    hh_title = "HeadHunter Moscow"
-    superjob_title = "SuperJob Moscow"
-    table_structure = [
-        "Язык программирования",
-        "Вакансий найдено",
-        "Вакансий обработано",
-        "Средняя зарплата",
-    ]
-    hh_table_content.append(table_structure)
-    superjob_table_content.append(table_structure)
     try:
-        for programming_language in programming_language_range:
-            hh_params["text"] = programming_language_range.get(programming_language)
-            superjob_params["keyword"] = programming_language_range.get(
-                programming_language
-            )
-
-            superjob_language_salary = predict_average_salary_for_superjob(
-                superjob_api_link, superjob_params, superjob_headers
-            )
-            superjob_table_content.append(
-                [
-                    programming_language,
-                    superjob_language_salary.get("vacancies_found"),
-                    superjob_language_salary.get("vacancies_processed"),
-                    superjob_language_salary.get("average_salary"),
-                ]
-            )
-
-            hh_language_salary = predict_average_salary_for_hh(hh_api_link, hh_params)
-            hh_table_content.append(
-                [
-                    programming_language,
-                    hh_language_salary.get("vacancies_found"),
-                    hh_language_salary.get("vacancies_processed"),
-                    hh_language_salary.get("average_salary"),
-                ]
-            )
-        print(AsciiTable(hh_table_content, hh_title).table)
-        print(AsciiTable(superjob_table_content, superjob_title).table)
+        hh_all_statistic = collect_hh_all_statistic(
+            programming_language_range, hh_api_link
+        )
+        superjob_all_statistic = collect_superjob_all_statistic(
+            programming_language_range, superjob_api_link
+        )
+        hh_termial_table = create_table(hh_all_statistic, hh_title)
+        superjob_terminal_table = create_table(superjob_all_statistic, superjob_title)
+        print(hh_termial_table)
+        print()
+        print(superjob_terminal_table)
     except (requests.ConnectionError, requests.HTTPError):
         print("Что-то пошло не так. Проверьте соединение с интернетом.")
 
