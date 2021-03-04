@@ -91,7 +91,7 @@ def calculate_average_salary_for_all_vacancies(salary_range: List) -> Dict:
     filtered_range_salaries: List[float] = list(filter(None, salary_range))
     summation_result_salary = sum(filtered_range_salaries)
     vacancies_processed = len(filtered_range_salaries)
-    if not (summation_result_salary or vacancies_processed) == 0:
+    if not vacancies_processed == 0:
         average_salary = int(summation_result_salary / vacancies_processed)
     return {
         "vacancies_processed": vacancies_processed,
