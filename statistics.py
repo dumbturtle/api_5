@@ -21,12 +21,15 @@ def get_response_from_link(
 def predict_salary(
     salary_from: Optional[int], salary_to: Optional[int]
 ) -> Optional[float]:
+    average_coefficient = 2
+    no_salary_to_coefficient = 1.2
+    no_salary_from_coefficient = 0.8
     if salary_from and salary_to:
-        return (salary_from + salary_to) / 2
+        return (salary_from + salary_to) / average_coefficient
     if salary_from and not salary_to:
-        return salary_from * 1.2
+        return salary_from * no_salary_to_coefficient
     if not salary_from and salary_to:
-        return salary_to * 0.8
+        return salary_to * no_salary_from_coefficient
     return None
 
 
@@ -47,7 +50,8 @@ def predict_rub_salary_for_superjob(vacancy: Dict) -> Optional[float]:
 
 def predict_average_salary_for_hh(api_link: str, request_params: Dict) -> Dict:
     average_salaries = []
-    page_content = {"pages": 100}
+    hh_max_page = 100
+    page_content = {"pages": hh_max_page}
     for page in count():
         if page >= page_content["pages"]:
             break
@@ -98,10 +102,13 @@ def calculate_average_salary_for_all_vacancies(salaries: List) -> Dict:
 
 def collect_hh_statistics(programming_languages: Dict, api_link: str) -> List:
     hh_statistic = []
+    hh_mocsow_id  = 1
+    hh_vacancy_day_period = 30
+    hh_vacancy_per_page = 20
     hh_params = {
-        "area": 1,
-        "period": 30,
-        "per_page": 20,
+        "area": hh_mocsow_id,
+        "period": hh_vacancy_day_period,
+        "per_page": hh_vacancy_per_page,
     }
     for programming_language, request_text in programming_languages.items():
         hh_params["text"] = request_text
@@ -118,12 +125,13 @@ def collect_hh_statistics(programming_languages: Dict, api_link: str) -> List:
 
 
 def collect_superjob_statistics(programming_languages: Dict, api_link: str) -> List:
+    superjob_mocsow_id = 4
     superjob_statistic = []
     superjob_headers = {
         "X-Api-App-Id": os.environ["SUPERJOB_API_KEY"],
     }
     superjob_params = {
-        "town": 4,
+        "town": superjob_mocsow_id,
     }
     for programming_language, request_text in programming_languages.items():
         superjob_params["keyword"] = request_text
