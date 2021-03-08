@@ -102,7 +102,7 @@ def calculate_average_salary_for_all_vacancies(salaries: List) -> Dict:
 
 def collect_hh_statistics(programming_languages: Dict, api_link: str) -> List:
     hh_statistic = []
-    hh_mocsow_id  = 1
+    hh_mocsow_id = 1
     hh_vacancy_day_period = 30
     hh_vacancy_per_page = 20
     hh_params = {
@@ -124,19 +124,18 @@ def collect_hh_statistics(programming_languages: Dict, api_link: str) -> List:
     return hh_statistic
 
 
-def collect_superjob_statistics(programming_languages: Dict, api_link: str) -> List:
+def collect_superjob_statistics(
+    programming_languages: Dict, api_link: str, request_headers: Dict
+) -> List:
     superjob_mocsow_id = 4
     superjob_statistic = []
-    superjob_headers = {
-        "X-Api-App-Id": os.environ["SUPERJOB_API_KEY"],
-    }
     superjob_params = {
         "town": superjob_mocsow_id,
     }
     for programming_language, request_text in programming_languages.items():
         superjob_params["keyword"] = request_text
         superjob_language_salary = predict_average_salary_for_superjob(
-            api_link, superjob_params, superjob_headers
+            api_link, superjob_params, request_headers
         )
         superjob_statistic.append(
             [
@@ -165,6 +164,9 @@ def main():
     load_dotenv()
     hh_api_link = os.environ["HH_API_LINK"]
     superjob_api_link = os.environ["SUPERJOB_API_LINK"]
+    superjob_headers = {
+        "X-Api-App-Id": os.environ["SUPERJOB_API_KEY"],
+    }
     hh_title = "HeadHunter Moscow"
     superjob_title = "SuperJob Moscow"
     programming_languages = {
@@ -182,7 +184,7 @@ def main():
     try:
         hh_statistics = collect_hh_statistics(programming_languages, hh_api_link)
         superjob_statistics = collect_superjob_statistics(
-            programming_languages, superjob_api_link
+            programming_languages, superjob_api_link, superjob_headers
         )
         hh_termial_table = create_table(hh_statistics, hh_title)
         superjob_terminal_table = create_table(superjob_statistics, superjob_title)
