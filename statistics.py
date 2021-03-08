@@ -76,12 +76,12 @@ def predict_average_salary_for_superjob(
             api_link, params=request_params, headers=request_headers
         )
         page_content = page_response.json()
-        vacancies = page_content.get("objects")
-        if not vacancies:
-            break
         average_salaries += [
-            predict_rub_salary_for_superjob(vacancy) for vacancy in vacancies
+            predict_rub_salary_for_superjob(vacancy)
+            for vacancy in page_content.get("objects")
         ]
+        if not page_content.get("more"):
+            break
     superjob_salaries = calculate_average_salary_for_all_vacancies(average_salaries)
     superjob_salaries["vacancies_found"] = page_content.get("total")
     return superjob_salaries
@@ -127,10 +127,12 @@ def collect_hh_statistics(programming_languages: Dict, api_link: str) -> List:
 def collect_superjob_statistics(
     programming_languages: Dict, api_link: str, request_headers: Dict
 ) -> List:
-    superjob_mocsow_id = 4
     superjob_statistic = []
+    superjob_mocsow_id = 4
+    superjob_vacancy_on_page = 20
     superjob_params = {
         "town": superjob_mocsow_id,
+        "page": superjob_vacancy_on_page,
     }
     for programming_language, request_text in programming_languages.items():
         superjob_params["keyword"] = request_text
