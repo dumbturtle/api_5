@@ -103,8 +103,8 @@ def collect_hh_statistics(programming_languages: Dict, api_link: str) -> List:
         "period": 30,
         "per_page": 20,
     }
-    for programming_language in programming_languages:
-        hh_params["text"] = programming_languages.get(programming_language)
+    for programming_language, request_text in programming_languages.items():
+        hh_params["text"] = request_text
         hh_language_salary = predict_average_salary_for_hh(api_link, hh_params)
         hh_statistic.append(
             [
@@ -125,8 +125,8 @@ def collect_superjob_statistics(programming_languages: Dict, api_link: str) -> L
     superjob_params = {
         "town": 4,
     }
-    for programming_language in programming_languages:
-        superjob_params["keyword"] = programming_languages.get(programming_language)
+    for programming_language, request_text in programming_languages.items():
+        superjob_params["keyword"] = request_text
         superjob_language_salary = predict_average_salary_for_superjob(
             api_link, superjob_params, superjob_headers
         )
