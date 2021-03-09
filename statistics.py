@@ -50,17 +50,15 @@ def predict_rub_salary_for_superjob(vacancy: Dict) -> Optional[float]:
 
 def predict_average_salary_for_hh(api_link: str, request_params: Dict) -> Dict:
     average_salaries = []
-    hh_max_page = 100
-    page_content = {"pages": hh_max_page}
     for page in count():
-        if page >= page_content["pages"]:
-            break
         request_params["page"] = page
         page_response = get_response_from_link(api_link, params=request_params)
         page_content = page_response.json()
         average_salaries += [
             predict_rub_salary_for_hh(vacancy) for vacancy in page_content.get("items")
         ]
+        if page == page_content["pages"] - 1:
+            break
     hh_salaries = calculate_average_salary_for_all_vacancies(average_salaries)
     hh_salaries["vacancies_found"] = page_content.get("found")
     return hh_salaries
