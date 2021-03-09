@@ -191,8 +191,10 @@ def main():
         print(hh_termial_table)
         print()
         print(superjob_terminal_table)
-    except (requests.ConnectionError, requests.HTTPError):
+    except requests.ConnectionError:
         print("Что-то пошло не так. Проверьте соединение с интернетом.")
+    except requests.HTTPError as error:
+        print(f"Произошла ошибка: { error }")
 
 
 if __name__ == "__main__":
